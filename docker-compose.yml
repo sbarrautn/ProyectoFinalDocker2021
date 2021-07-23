@@ -16,6 +16,7 @@ services:
     volumes:
       - ./nginx:/etc/nginx/sites-available
       - ${PROYECTO_API_DIR}:/var/www
+      - ./ssl:/etc/nginx/ssl
     environment:
       TZ: "America/Argentina/Cordoba"
       COMPOSER_CACHE_DIR: /var/www/.composer
