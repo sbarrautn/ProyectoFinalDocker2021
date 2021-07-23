@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+COMMANDS_DIR="$SCRIPT_DIR/commands"
+COMMANDS_PATTERN_FILTER="$COMMANDS_DIR"/run-*.sh
+
+# Loading global vars.
+
+function get_help {
+    cat $1 | grep '#help:' | cut -c7-
+}
+
+function get_command_name {
+    local commandName=${1##*/}  # remove full path
+    local commandName=${commandName:4}  # remove run
+    local commandName=${commandName%.*} # remove ext
+    echo ${commandName}
+}
+
+function list_commands {
+    for runScript in $COMMANDS_PATTERN_FILTER
+    do
+        local commandName=$(get_command_name ${runScript})
+        printf "$commandName "
+    done
+}
+function list_commands_with_help {
+    echo '  Available commands:'
+    echo
+    for runScript in $COMMANDS_PATTERN_FILTER
+    do
+        local commandName=$(get_command_name ${runScript})
+        local commandHelp=$(get_help ${runScript})
+        printf "     %-25s  %s \n" "$commandName" "$commandHelp"
+    done
+    echo
+    echo
+}
+
+
+if [[ $# -eq 0 ]] ; then
+    echo
+    echo 'Usage:'
+    echo
+    echo "     ${0##*/} command  "
+    echo
+    list_commands_with_help
+    exit 0
+fi
+
+commandNameAsked="$COMMANDS_DIR/run-$1.sh"
+
+case "$1" in
+  "completions")
+    echo `list_commands`
+    ;;
+  *)
+    if [ -f $commandNameAsked ]; then
+        shift # removing first argument
+        /usr/bin/env $(cat $SCRIPT_DIR/../.env | grep -v ^# | xargs) $commandNameAsked $@
+    else
+        echo
+        echo "     $1 - Command not found"
+        echo
+        list_commands_with_help
+        exit 1
+    fi
+    ;;
+esac
+
+

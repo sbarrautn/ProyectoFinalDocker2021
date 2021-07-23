@@ -1,0 +1,103 @@
+version: '2'
+services:
+  api:
+    image: lbanchio/docker-php-nginx
+    container_name: proyecto_api
+    hostname: dev
+    user: root
+    links:
+      - redis
+      - mysql
+      - beanstalkd
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./nginx:/etc/nginx/sites-available
+      - ${PROYECTO_API_DIR}:/var/www
+    environment:
+      TZ: "America/Argentina/Cordoba"
+      COMPOSER_CACHE_DIR: /var/www/.composer
+      COMPOSER_HOME: /var/www/.composer
+      XDEBUG_CONFIG: "remote_host=172.22.0.1"
+      PHP_IDE_CONFIG: "serverName=Docker"
+    networks:
+      proyecto_network:
+        ipv4_address: ${API_IP}
+
+  mysql:
+    image: mysql:8
+    container_name: proyecto_database
+    hostname: mysql
+    command: --default-authentication-plugin=mysql_native_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+      - ./mysql-config:/etc/mysql/conf.d
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: proyecto_database
+      MYSQL_USER: test
+      MYSQL_PASSWORD: test
+      USER: 1000
+    networks:
+      proyecto_network:
+        ipv4_address: ${DATABASE_IP}
+
+  redis:
+    image: redis
+    container_name: proyecto_redis
+    hostname: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis-data:/data
+    networks:
+      proyecto_network:
+        ipv4_address: ${REDIS_IP}
+
+  beanstalkd:
+    image: schickling/beanstalkd
+    container_name: proyecto_queues
+    hostname: beanstalk
+    links:
+      - redis
+      - mysql
+    ports:
+      - "11300:11300"
+    networks:
+      proyecto_network:
+        ipv4_address: ${BEANSTALKD_IP}
+
+  adminer:
+    image: adminer
+    container_name: proyecto_adminer
+    ports:
+      - 8080:8080
+    networks:
+      proyecto_network:
+        ipv4_address: ${ADMINER_IP}
+
+  web:
+    image: node:10.14-alpine
+    container_name: proyecto_web
+    hostname: assets
+    ports:
+      - '3002:3002'
+      - '9229:9229'
+    volumes:
+      - ${PROYECTO_WEB_DIR}:/usr/src/service
+    working_dir: /usr/src/service
+    networks:
+      proyecto_network:
+        ipv4_address: ${WEB_IP}
+    command: yarn assets
+
+networks:
+  proyecto_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${PROYECTO_SUBNET}

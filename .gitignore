@@ -1,0 +1,4 @@
+.env
+mysql-data
+redis-data
+.idea
