@@ -82,19 +82,17 @@ services:
         ipv4_address: ${ADMINER_IP}
 
   web:
-    image: node:10.14-alpine
+    build:
+      context: ${PROYECTO_WEB_DIR}
+      dockerfile: Dockerfile.frontend
+    image: web-angular:latest
     container_name: proyecto_web
     hostname: assets
     ports:
-      - '3002:3002'
-      - '9229:9229'
-    volumes:
-      - ${PROYECTO_WEB_DIR}:/usr/src/service
-    working_dir: /usr/src/service
+      - '8000:8080'
     networks:
       proyecto_network:
         ipv4_address: ${WEB_IP}
-    command: yarn assets
 
 networks:
   proyecto_network:
