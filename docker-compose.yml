@@ -85,7 +85,7 @@ services:
     build:
       context: ${PROYECTO_WEB_DIR}
       dockerfile: Dockerfile.frontend
-    image: web-angular:latest
+    image: web-vuejs:latest
     container_name: proyecto_web
     hostname: assets
     ports:
